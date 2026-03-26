@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HelpDesk Pro - Sistema de Chamados</title>
+  <meta name="description" content="Sistema de gerenciamento de chamados técnicos - HelpDesk Pro">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header__inner">
+      <div class="header__brand">
+        <span class="header__icon">🎫</span>
+        <h1 class="header__title">HelpDesk Pro</h1>
+      </div>
+      <nav class="header__nav">
+        <span class="header__stats" id="stats-open" title="Chamados abertos">🟡 <span id="count-open">0</span></span>
+        <span class="header__stats" id="stats-progress" title="Em andamento">🔵 <span id="count-progress">0</span></span>
+        <span class="header__stats" id="stats-done" title="Concluídos">🟢 <span id="count-done">0</span></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main container">
+    <section class="toolbar" id="toolbar">
+      <div class="toolbar__filters">
+        <input
+          type="search"
+          id="search-input"
+          class="input input--search"
+          placeholder="Buscar chamado..."
+          aria-label="Buscar chamados"
+        >
+        <select id="filter-status" class="input input--select" aria-label="Filtrar por status">
+          <option value="todos">Todos os status</option>
+          <option value="aberto">🟡 Aberto</option>
+          <option value="em_andamento">🔵 Em Andamento</option>
+          <option value="concluido">🟢 Concluído</option>
+        </select>
+        <select id="filter-priority" class="input input--select" aria-label="Filtrar por prioridade">
+          <option value="todos">Todas as prioridades</option>
+          <option value="alta">🔴 Alta</option>
+          <option value="media">🟠 Média</option>
+          <option value="baixa">🟢 Baixa</option>
+        </select>
+        <select id="filter-category" class="input input--select" aria-label="Filtrar por categoria">
+          <option value="todos">Todas as categorias</option>
+          <option value="bug">🐛 Bug</option>
+          <option value="feature">✨ Feature</option>
+          <option value="suporte">💬 Suporte</option>
+          <option value="infraestrutura">🖥️ Infraestrutura</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" id="btn-new-ticket" aria-label="Novo chamado">
+        + Novo Chamado
+      </button>
+    </section>
+
+    <!-- Ticket List -->
+    <section class="ticket-list" id="ticket-list" aria-label="Lista de chamados">
+      <!-- tickets rendered by JS -->
+    </section>
+
+    <!-- Empty State -->
+    <div class="empty-state hidden" id="empty-state">
+      <span class="empty-state__icon">📭</span>
+      <h2>Nenhum chamado encontrado</h2>
+      <p>Crie um novo chamado ou ajuste os filtros.</p>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-title">Novo Chamado</h2>
+        <button class="modal__close" id="btn-close-modal" aria-label="Fechar">&times;</button>
+      </div>
+      <form class="modal__form" id="ticket-form">
+        <input type="hidden" id="ticket-id">
+
+        <div class="form-group">
+          <label for="ticket-title" class="form-label">Título *</label>
+          <input
+            type="text"
+            id="ticket-title"
+            class="input"
+            required
+            minlength="3"
+            maxlength="120"
+            placeholder="Descreva brevemente o problema"
+          >
+          <span class="form-error hidden" id="error-title">Título deve ter entre 3 e 120 caracteres.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="ticket-description" class="form-label">Descrição *</label>
+          <textarea
+            id="ticket-description"
+            class="input input--textarea"
+            required
+            minlength="10"
+            maxlength="2000"
+            rows="4"
+            placeholder="Detalhe o chamado com o máximo de informações"
+          ></textarea>
+          <span class="form-error hidden" id="error-description">Descrição deve ter entre 10 e 2000 caracteres.</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ticket-category" class="form-label">Categoria *</label>
+            <select id="ticket-category" class="input input--select" required>
+              <option value="">Selecione</option>
+              <option value="bug">🐛 Bug</option>
+              <option value="feature">✨ Feature</option>
+              <option value="suporte">💬 Suporte</option>
+              <option value="infraestrutura">🖥️ Infraestrutura</option>
+            </select>
+            <span class="form-error hidden" id="error-category">Selecione uma categoria.</span>
+          </div>
+          <div class="form-group">
+            <label for="ticket-priority" class="form-label">Prioridade *</label>
+            <select id="ticket-priority" class="input input--select" required>
+              <option value="">Selecione</option>
+              <option value="alta">🔴 Alta</option>
+              <option value="media">🟠 Média</option>
+              <option value="baixa">🟢 Baixa</option>
+            </select>
+            <span class="form-error hidden" id="error-priority">Selecione uma prioridade.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="ticket-requester" class="form-label">Solicitante *</label>
+          <input
+            type="text"
+            id="ticket-requester"
+            class="input"
+            required
+            minlength="2"
+            maxlength="80"
+            placeholder="Nome do solicitante"
+          >
+          <span class="form-error hidden" id="error-requester">Nome deve ter entre 2 e 80 caracteres.</span>
+        </div>
+
+        <div class="form-group" id="status-group" style="display:none;">
+          <label for="ticket-status" class="form-label">Status</label>
+          <select id="ticket-status" class="input input--select">
+            <option value="aberto">🟡 Aberto</option>
+            <option value="em_andamento">🔵 Em Andamento</option>
+            <option value="concluido">🟢 Concluído</option>
+          </select>
+        </div>
+
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="btn-cancel">Cancelar</button>
+          <button type="submit" class="btn btn--primary" id="btn-submit">Criar Chamado</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay hidden" id="confirm-overlay">
+    <div class="modal modal--sm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="confirm-title">Confirmar Exclusão</h2>
+      </div>
+      <p class="modal__text">Tem certeza que deseja excluir este chamado? Esta ação não pode ser desfeita.</p>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="btn-confirm-cancel">Cancelar</button>
+        <button class="btn btn--danger" id="btn-confirm-delete">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast hidden" id="toast" role="alert" aria-live="polite"></div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>HelpDesk Pro &copy; 2025 — Projeto de portfólio QA</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
